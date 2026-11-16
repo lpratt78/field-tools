@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; worker-src 'self'">
+<title>Field Tools</title>
+<meta name="description" content="VFD to GPM, analog scaling, Ohm's law, mass/volume and unit conversions">
+<meta name="theme-color" content="#0b0d10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Field Tools">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <!-- ================= Sidebar ================= -->
+  <aside class="nav">
+    <div class="brand">
+      <div class="label-top">Utility Suite</div>
+      <div class="name">Field <span>Tools</span></div>
+    </div>
+
+    <div class="nav-group">Flow &amp; Signals</div>
+    <button class="nav-btn" data-tool="vfd" style="--c: var(--teal)">
+      <span class="ico">%</span><span><div class="t">VFD → GPM</div><div class="d">speed to flow range</div></span><span class="k">^1</span>
+    </button>
+    <button class="nav-btn" data-tool="scale" style="--c: var(--purple)">
+      <span class="ico">⟋</span><span><div class="t">Analog Scaling</div><div class="d">mA · V · raw counts</div></span><span class="k">^2</span>
+    </button>
+
+    <div class="nav-group">Electrical</div>
+    <button class="nav-btn" data-tool="ohm" style="--c: var(--yellow)">
+      <span class="ico">Ω</span><span><div class="t">Ohm's Law</div><div class="d">P · I · E · R</div></span><span class="k">^3</span>
+    </button>
+
+    <div class="nav-group">Conversions</div>
+    <button class="nav-btn" data-tool="mv" style="--c: var(--yellow)">
+      <span class="ico">⇄</span><span><div class="t">Mass ↔ Volume</div><div class="d">gal ↔ lb by weight</div></span><span class="k">^4</span>
+    </button>
+    <button class="nav-btn" data-tool="units" style="--c: var(--blue)">
+      <span class="ico">≡</span><span><div class="t">Unit Converter</div><div class="d">11 categories</div></span><span class="k">^5</span>
+    </button>
+
+    <div class="nav-foot">
+      <div><kbd>Ctrl</kbd>+<kbd>R</kbd> swap</div>
+      <div><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> copy result</div>
+    </div>
+  </aside>
+
+  <!-- ================= Main ================= -->
+  <main>
+    <div class="install-bar" id="installBar" hidden>
+      <img src="icons/icon-192.png" alt="" width="28" height="28">
+      <span class="install-msg" id="installMsg"></span>
+      <button class="icon-btn install-btn" id="installBtn" hidden>Install</button>
+      <button class="icon-btn" id="installClose" title="Dismiss" aria-label="Dismiss">✕</button>
+    </div>
+    <div class="topbar">
+      <div>
+        <div class="label-top" id="tLabel">Field Utility Tool</div>
+        <h1 id="tTitle">VFD <span>GPM</span></h1>
+        <div class="subtitle" id="tSub"></div>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="pinBtn" title="Keep on top of other windows">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 1.5l4.5 4.5-2.5 1-3 3 .5 3.5-1.5 1.5-2.5-2.5L2 15l-1-1 3.5-3.5L2 8l1.5-1.5L7 7l3-3z"/></svg>
+          On top
+        </button>
+      </div>
+    </div>
+
+    <div class="pages">
+
+      <!-- ============ VFD -> GPM ============ -->
+      <section class="page" id="page-vfd">
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag purple">Scale</div>
+            <h2>VFD Scale Range (%)</h2>
+            <div class="grid2">
+              <div class="field">
+                <div class="lbl">Scale Min <span class="unit purple">%</span></div>
+                <div class="input-wrap"><input type="number" class="num sm purple-focus" id="vScaleMin" step="0.1"><span class="suffix">%</span></div>
+              </div>
+              <div class="field">
+                <div class="lbl">Scale Max <span class="unit purple">%</span></div>
+                <div class="input-wrap"><input type="number" class="num sm purple-focus" id="vScaleMax" step="0.1"><span class="suffix">%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-tag">Inputs</div>
+            <h2>Known Values</h2>
+            <div class="field">
+              <div class="lbl">VFD Speed / Load <span class="unit">%</span></div>
+              <div class="input-wrap"><input type="number" class="num" id="vPct" step="0.1"><span class="suffix">%</span></div>
+              <div class="slider-row">
+                <input type="range" id="vSlider" min="0" max="100" step="0.1">
+                <span class="slider-val" id="vSliderVal">—</span>
+              </div>
+            </div>
+            <div class="field">
+              <div class="lbl">Current GPM Reading <span class="unit">GPM</span></div>
+              <div class="input-wrap"><input type="number" class="num" id="vGpm" min="0" step="0.1"><span class="suffix">GPM</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag yellow">Results</div>
+            <h2>Calculated GPM Range</h2>
+            <div class="output-grid">
+              <div class="out-card teal"><div class="card-label">Min GPM</div><div class="card-value" id="vOutMin">—</div><div class="card-unit" id="vOutMinL">at 0%</div></div>
+              <div class="out-card yellow"><div class="card-label">Max GPM</div><div class="card-value" id="vOutMax">—</div><div class="card-unit" id="vOutMaxL">at 100%</div></div>
+            </div>
+            <div class="gauge-wrap">
+              <div class="gauge-labels"><span id="vGL">0%</span><span id="vGC">—</span><span id="vGR">100%</span></div>
+              <div class="gauge-track"><div class="gauge-fill" id="vGFill"><div class="gauge-needle"></div></div></div>
+            </div>
+            <div class="formula" id="vFormula"></div>
+            <div class="error-msg" id="vErr"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Analog scaling ============ -->
+      <section class="page" id="page-scale">
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag purple">Ranges</div>
+            <h2>Scaling Ranges <span class="aside">like SCP · SCL · NORM_X + SCALE_X</span></h2>
+            <div class="grid2">
+              <div class="field"><div class="lbl">Input 1 Min <span class="unit purple">raw</span></div><input class="num sm purple-focus" id="sInMin" inputmode="decimal"></div>
+              <div class="field"><div class="lbl">Input 1 Max <span class="unit purple">raw</span></div><input class="num sm purple-focus" id="sInMax" inputmode="decimal"></div>
+            </div>
+            <div class="field" style="margin-top:0.6rem">
+              <select class="sel" id="sPreset" title="Input 1 range preset"></select>
+            </div>
+            <div class="swap-row"><button class="swap-btn" id="sSwapRanges" title="Swap Input 1 and Input 2 ranges (Ctrl+R)">⇅</button></div>
+            <div class="grid2">
+              <div class="field"><div class="lbl">Input 2 Min <span class="unit purple">eng</span></div><input class="num sm purple-focus" id="sOutMin" inputmode="decimal"></div>
+              <div class="field"><div class="lbl">Input 2 Max <span class="unit purple">eng</span></div><input class="num sm purple-focus" id="sOutMax" inputmode="decimal"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-tag">Value</div>
+            <h2>Convert a Value <span class="aside">type in either box</span></h2>
+            <div class="field">
+              <div class="lbl">Input 1 <span class="unit">raw</span></div>
+              <input class="num" id="sIn" inputmode="decimal">
+              <div class="slider-row"><input type="range" id="sSlider"><span class="slider-val" id="sPctVal">—</span></div>
+              <div class="slider-ends"><span id="sSlMin"></span><span id="sSlMax"></span></div>
+            </div>
+            <div class="field">
+              <div class="lbl">Input 2 <span class="unit">eng</span></div>
+              <input class="num" id="sOut" inputmode="decimal">
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag yellow">Results</div>
+            <h2>Scaled Output</h2>
+            <div class="output-grid">
+              <div class="out-card yellow"><div class="card-label">Input 2</div><div class="card-value" id="sCardOut">—</div><div class="card-unit" id="sCardOutL">eng units</div></div>
+              <div class="out-card purple"><div class="card-label">% of Span</div><div class="card-value" id="sCardPct">—</div><div class="card-unit" id="sCardPctL">of input range</div></div>
+            </div>
+            <div class="gauge-wrap">
+              <div class="gauge-labels"><span id="sGL"></span><span id="sGC"></span><span id="sGR"></span></div>
+              <div class="gauge-track"><div class="gauge-fill" id="sGFill"><div class="gauge-needle"></div></div></div>
+            </div>
+            <div class="formula" id="sFormula"></div>
+            <table class="tbl" id="sTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Ohm's law (PIE) ============ -->
+      <section class="page" id="page-ohm">
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag">Inputs</div>
+            <h2>Enter Any Two <span class="aside">the other two are solved</span></h2>
+            <div class="field">
+              <div class="lbl">E · Voltage <span class="unit" id="oTagE"></span></div>
+              <div class="vu"><input class="num" id="oE" inputmode="decimal"><select class="sel" id="oUE"></select></div>
+            </div>
+            <div class="field">
+              <div class="lbl">I · Current <span class="unit" id="oTagI"></span></div>
+              <div class="vu"><input class="num" id="oI" inputmode="decimal"><select class="sel" id="oUI"></select></div>
+            </div>
+            <div class="field">
+              <div class="lbl">R · Resistance <span class="unit" id="oTagR"></span></div>
+              <div class="vu"><input class="num" id="oR" inputmode="decimal"><select class="sel" id="oUR"></select></div>
+            </div>
+            <div class="field">
+              <div class="lbl">P · Power <span class="unit" id="oTagP"></span></div>
+              <div class="vu"><input class="num" id="oP" inputmode="decimal"><select class="sel" id="oUP"></select></div>
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:1rem">
+              <button class="icon-btn" id="oClear">Clear all</button>
+              <button class="icon-btn" id="oLoop" title="Voltage and power across a 250 Ω loop resistor at 20 mA">Example: 250 Ω @ 20 mA</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag yellow">Results</div>
+            <h2>Solved Values</h2>
+            <div class="output-grid">
+              <div class="out-card teal"><div class="card-label">E · Volts</div><div class="card-value" id="oCE">—</div><div class="card-unit" id="oCEu">V</div></div>
+              <div class="out-card teal"><div class="card-label">I · Amps</div><div class="card-value" id="oCI">—</div><div class="card-unit" id="oCIu">A</div></div>
+              <div class="out-card teal"><div class="card-label">R · Ohms</div><div class="card-value" id="oCR">—</div><div class="card-unit" id="oCRu">Ω</div></div>
+              <div class="out-card teal"><div class="card-label">P · Watts</div><div class="card-value" id="oCP">—</div><div class="card-unit" id="oCPu">W</div></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 150px 1fr; gap: 1rem; align-items:center; margin-top: 0.9rem">
+              <svg id="oWheel" viewBox="0 0 150 150" width="150" height="150"></svg>
+              <div class="formula" id="oFormula" style="margin-top:0"></div>
+            </div>
+            <div class="error-msg" id="oErr"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Mass <-> Volume ============ -->
+      <section class="page" id="page-mv">
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag">Convert</div>
+            <h2>Convert <span class="aside">type in either box</span></h2>
+            <div class="vu"><input class="num" id="mFrom" inputmode="decimal"><select class="sel" id="mFromU"></select></div>
+            <div class="swap-row"><button class="swap-btn" id="mSwap" title="Swap units (Ctrl+R)">⇅</button></div>
+            <div class="vu"><input class="num" id="mTo" inputmode="decimal"><select class="sel" id="mToU"></select></div>
+          </div>
+          <div class="panel">
+            <div class="panel-tag yellow">Weight</div>
+            <h2>Weight Factor <span class="aside">weight per volume</span></h2>
+            <div class="vu"><input class="num sm" id="mFactor" inputmode="decimal"><select class="sel" id="mFactorUnit"></select></div>
+            <div class="mat-grid" id="mMaterials"></div>
+            <div class="note">Typical values near room temperature. Real fluids vary with temperature and grade.</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag yellow">Results</div>
+            <h2>Result</h2>
+            <div class="output-grid">
+              <div class="out-card yellow wide"><div class="card-label" id="mCardL">Weight</div><div class="card-value" id="mCard">—</div><div class="card-unit" id="mCardU"></div></div>
+            </div>
+            <div class="formula" id="mFormula"></div>
+            <table class="tbl" id="mTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Unit converter ============ -->
+      <section class="page" id="page-units">
+        <div class="span2"><div class="chips" id="uCats"></div></div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag blue">Convert</div>
+            <h2><span id="uCatName">Length</span> <span class="aside">type in either box</span></h2>
+            <div class="vu"><input class="num" id="uFrom" inputmode="decimal"><select class="sel" id="uFromU"></select></div>
+            <div class="swap-row"><button class="swap-btn" id="uSwap" title="Swap units (Ctrl+R)">⇅</button></div>
+            <div class="vu"><input class="num" id="uTo" inputmode="decimal"><select class="sel" id="uToU"></select></div>
+            <div class="formula" id="uFormula"></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel">
+            <div class="panel-tag yellow">All Units</div>
+            <h2>Same Value In Every Unit <span class="aside">click a row to convert to it</span></h2>
+            <table class="tbl" id="uTable" style="margin-top:0"></table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="statusbar">
+      <span class="txt" id="status"></span>
+      <button class="icon-btn" id="copyBtn" title="Copy (Ctrl+Shift+C)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>
+        Copy
+      </button>
+    </div>
+  </main>
+</div>
+<script src="core.js"></script>
+<script src="app.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
