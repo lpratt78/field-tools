@@ -2,7 +2,7 @@
   "name": "Field Tools",
   "short_name": "Field Tools",
   "description": "VFD to GPM, analog scaling, Ohm's law, mass/volume and unit conversions",
-  "id": "./",
+  "id": "/field-tools/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

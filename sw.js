@@ -1,6 +1,6 @@
 /* Field Tools service worker: caches the whole app so it works with no signal.
    Bump VERSION whenever any file changes so phones pick up the new copy. */
-const VERSION = 'field-tools-v1.2.0';
+const VERSION = 'field-tools-v1.2.1';
 const FILES = [
   './', 'index.html', 'styles.css', 'core.js', 'app.js', 'pwa.js', 'manifest.webmanifest',
   'fonts/barlow-condensed-latin-400-normal.woff2', 'fonts/barlow-condensed-latin-600-normal.woff2',
